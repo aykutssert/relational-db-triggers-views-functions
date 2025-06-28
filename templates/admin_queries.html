@@ -1,0 +1,298 @@
+<!-- templates/admin_queries.html -->
+{% extends "base.html" %}
+{% block title %}SQL Queries{% endblock %}
+{% block content %}
+<h1>SQL Query Development</h1>
+
+<div class="card" style="background: #e8f5e8; margin-bottom: 20px;">
+    <h3>🔍 Advanced SQL Queries</h3>
+    <p>This section demonstrates various JOIN operations including LEFT JOIN, RIGHT JOIN, and FULL OUTER JOIN (simulated with UNION).</p>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('left-join')">⬅️ LEFT JOIN</div>
+    <div class="tab" onclick="showTab('right-join')">➡️ RIGHT JOIN</div>
+    <div class="tab" onclick="showTab('full-outer')">↔️ FULL OUTER JOIN</div>
+    <div class="tab" onclick="showTab('custom-queries')">⚙️ Custom Queries</div>
+</div>
+
+<div id="left-join" class="tab-content active">
+    <h2>LEFT JOIN: Books with Order Statistics</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL Query:</strong></p>
+        <code style="display: block; background: #e9ecef; padding: 10px; border-radius: 4px;">
+            SELECT b.title, b.price, b.stock_quantity, 
+                   COALESCE(SUM(od.quantity), 0) as total_sold<br>
+            FROM books b<br>
+            LEFT JOIN order_details od ON b.book_id = od.book_id<br>
+            GROUP BY b.book_id, b.title, b.price, b.stock_quantity
+        </code>
+        <p><strong>Purpose:</strong> Shows all books including those that have never been ordered.</p>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Book Title</th>
+                <th>Price</th>
+                <th>Current Stock</th>
+                <th>Total Sold</th>
+                <th>Sales Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in queries_data.left_join %}
+            <tr>
+                <td><strong>{{ book.title }}</strong></td>
+                <td>{{ book.price }} TL</td>
+                <td>{{ book.stock_quantity }}</td>
+                <td>
+                    {% if book.total_sold > 0 %}
+                        <span style="color: green; font-weight: bold;">{{ book.total_sold }}</span>
+                    {% else %}
+                        <span style="color: red;">0 (Never Ordered)</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if book.total_sold > 5 %}
+                        <span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px;">Bestseller</span>
+                    {% elif book.total_sold > 0 %}
+                        <span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 4px;">Selling</span>
+                    {% else %}
+                        <span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 4px;">No Sales</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="right-join" class="tab-content">
+    <h2>RIGHT JOIN: Orders with Customer Details</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL Query:</strong></p>
+        <code style="display: block; background: #e9ecef; padding: 10px; border-radius: 4px;">
+            SELECT o.order_id, o.order_date, o.total_amount, 
+                   CONCAT(u.first_name, ' ', u.last_name) as customer_name<br>
+            FROM books b<br>
+            RIGHT JOIN order_details od ON b.book_id = od.book_id<br>
+            RIGHT JOIN orders o ON od.order_id = o.order_id<br>
+            RIGHT JOIN users u ON o.user_id = u.user_id
+        </code>
+        <p><strong>Purpose:</strong> Shows all orders with customer information, ensuring no orders are missed.</p>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Order Date</th>
+                <th>Total Amount</th>
+                <th>Order Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in queries_data.right_join %}
+            <tr>
+                <td><strong>#{{ order.order_id }}</strong></td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.order_date.strftime('%d.%m.%Y %H:%M') if order.order_date else 'N/A' }}</td>
+                <td><strong>{{ order.total_amount or 0 }} TL</strong></td>
+                <td>
+                    {% if order.total_amount and order.total_amount > 100 %}
+                        <span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px;">High Value</span>
+                    {% elif order.total_amount and order.total_amount > 50 %}
+                        <span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 4px;">Medium Value</span>
+                    {% elif order.total_amount %}
+                        <span style="background: #2196F3; color: white; padding: 2px 6px; border-radius: 4px;">Standard</span>
+                    {% else %}
+                        <span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 4px;">No Amount</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="full-outer" class="tab-content">
+    <h2>FULL OUTER JOIN: Books and Orders Combined</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL Query (UNION Simulation):</strong></p>
+        <code style="display: block; background: #e9ecef; padding: 10px; border-radius: 4px;">
+            SELECT b.title, 'Book' as type, b.price as amount, NULL as order_date<br>
+            FROM books b<br>
+            UNION<br>
+            SELECT CONCAT('Order #', o.order_id), 'Order' as type, 
+                   o.total_amount as amount, o.order_date<br>
+            FROM orders o
+        </code>
+        <p><strong>Purpose:</strong> Combines books and orders in a single result set (MySQL FULL OUTER JOIN simulation).</p>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name/Title</th>
+                <th>Entity Type</th>
+                <th>Amount/Price</th>
+                <th>Date</th>
+                <th>Category</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in queries_data.full_outer_join %}
+            <tr>
+                <td><strong>{{ item.title }}</strong></td>
+                <td>
+                    {% if item.type == 'Book' %}
+                        <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 4px;">📚 {{ item.type }}</span>
+                    {% else %}
+                        <span style="background: #fff3e0; color: #f57c00; padding: 2px 6px; border-radius: 4px;">📦 {{ item.type }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.amount }} TL</td>
+                <td>
+                    {% if item.order_date %}
+                        {{ item.order_date.strftime('%d.%m.%Y') }}
+                    {% else %}
+                        <span style="color: #999;">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.type == 'Book' %}
+                        <span style="color: #4CAF50;">Inventory Item</span>
+                    {% else %}
+                        <span style="color: #ff9800;">Transaction</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="custom-queries" class="tab-content">
+    <h2>Custom Query Testing</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p>Test additional JOIN queries with different parameters and conditions.</p>
+    </div>
+    
+    <div class="grid">
+        <div class="card">
+            <h4>Categories with Book Count (LEFT JOIN)</h4>
+            <p>Shows all categories including those with no books.</p>
+            <form method="POST" action="{{ url_for('test_query') }}">
+                <input type="hidden" name="query_type" value="custom_left">
+                <button type="submit" class="btn btn-info">Execute LEFT JOIN</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h4>Customers with Order Stats (LEFT JOIN)</h4>
+            <p>Shows all customers including those with no orders.</p>
+            <form method="POST" action="{{ url_for('test_query') }}">
+                <input type="hidden" name="query_type" value="custom_right">
+                <button type="submit" class="btn btn-info">Execute LEFT JOIN</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h4>Authors and Books (UNION)</h4>
+            <p>Combines authors and books with publication years.</p>
+            <form method="POST" action="{{ url_for('test_query') }}">
+                <input type="hidden" name="query_type" value="custom_full">
+                <button type="submit" class="btn btn-info">Execute UNION Query</button>
+            </form>
+        </div>
+    </div>
+    
+    {% if custom_result %}
+    <div class="card" style="background: #e8f5e8; margin-top: 20px;">
+        <h3>🎯 Custom Query Result: {{ custom_result.type }}</h3>
+        <p><strong>Description:</strong> {{ custom_result.description }}</p>
+        
+        <table class="table" style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    {% for column in custom_result.columns %}
+                    <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in custom_result.data %}
+                <tr>
+                    {% if custom_result.type.startswith('Categories') %}
+                        <td><strong>{{ row.category_name }}</strong></td>
+                        <td>{{ row.book_count }}</td>
+                        <td>{{ row.total_stock }}</td>
+                    {% elif custom_result.type.startswith('Customers') %}
+                        <td>{{ row.first_name }}</td>
+                        <td>{{ row.last_name }}</td>
+                        <td>{{ row.order_count }}</td>
+                        <td>{{ row.total_spent }} TL</td>
+                    {% elif custom_result.type.startswith('Authors') %}
+                        <td>
+                            {% if row.entity_type == 'Author' %}
+                                <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 4px;">👤 {{ row.entity_type }}</span>
+                            {% else %}
+                                <span style="background: #fff3e0; padding: 2px 6px; border-radius: 4px;">📚 {{ row.entity_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ row.name }}</strong></td>
+                        <td>{{ row.year_info or '-' }}</td>
+                        <td>{{ row.extra_info }}</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="background: #e3f2fd; margin-top: 30px;">
+    <h4>📊 JOIN Operations Explained</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 15px;">
+        <div>
+            <h5>⬅️ LEFT JOIN:</h5>
+            <ul style="padding-left: 20px;">
+                <li>Returns ALL records from left table</li>
+                <li>Matching records from right table</li>
+                <li>NULL for non-matching right records</li>
+                <li>Good for "show all X with optional Y"</li>
+            </ul>
+        </div>
+        <div>
+            <h5>➡️ RIGHT JOIN:</h5>
+            <ul style="padding-left: 20px;">
+                <li>Returns ALL records from right table</li>
+                <li>Matching records from left table</li>
+                <li>NULL for non-matching left records</li>
+                <li>Less common than LEFT JOIN</li>
+            </ul>
+        </div>
+        <div>
+            <h5>↔️ FULL OUTER (UNION):</h5>
+            <ul style="padding-left: 20px;">
+                <li>Returns records from both tables</li>
+                <li>MySQL doesn't support FULL OUTER</li>
+                <li>Simulated with UNION</li>
+                <li>Combines different entity types</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Check if we need to show custom queries tab (from URL hash)
+window.onload = function() {
+    if (window.location.hash === '#custom-queries') {
+        showTab('custom-queries');
+    }
+}
+</script>
+{% endblock %}

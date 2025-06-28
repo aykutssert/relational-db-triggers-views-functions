@@ -1,0 +1,98 @@
+<!-- templates/customer_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Müşteri Panel{% endblock %}
+{% block content %}
+<h1>Müşteri Paneli</h1>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('books-tab')">Kitaplar</div>
+    <div class="tab" onclick="showTab('orders-tab')">Siparişlerim</div>
+</div>
+
+<div id="books-tab" class="tab-content active">
+    <h2>Mevcut Kitaplar</h2>
+    <div class="grid">
+        {% for book in books %}
+        <div class="card">
+            <h3>{{ book.title }}</h3>
+            <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+            <p><strong>Yazar:</strong> {{ book.authors }}</p>
+            <p><strong>Kategori:</strong> {{ book.category_name }}</p>
+            <p><strong>Fiyat:</strong> {{ book.price }} TL</p>
+            <p><strong>Stok:</strong> 
+                {% if book.stock_quantity > 10 %}
+                    <span style="color: green;">{{ book.stock_quantity }} adet</span>
+                {% elif book.stock_quantity > 0 %}
+                    <span style="color: orange;">{{ book.stock_quantity }} adet (Az kaldı!)</span>
+                {% else %}
+                    <span style="color: red;">Stokta yok</span>
+                {% endif %}
+            </p>
+            
+            {% if book.stock_quantity > 0 %}
+            <form method="POST" action="{{ url_for('place_order') }}" style="margin-top: 10px;">
+                <input type="hidden" name="book_id" value="{{ book.book_id }}">
+                <div class="form-group">
+                    <label>Adet:</label>
+                    <input type="number" name="quantity" value="1" min="1" style="width: 80px;">
+                </div>
+                <button type="submit" class="btn">🛒 Sipariş Ver</button>
+            </form>
+            {% else %}
+            <button class="btn" disabled style="background: #ccc;">Stokta Yok</button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="orders-tab" class="tab-content">
+    <h2>Siparişlerim</h2>
+    {% if orders %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sipariş No</th>
+                <th>Tarih</th>
+                <th>Ürünler</th>
+                <th>Toplam</th>
+                <th>Durum</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>#{{ order.order_id }}</td>
+                <td>{{ order.order_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>{{ order.order_items }}</td>
+                <td><strong>{{ order.total_amount }} TL</strong></td>
+                <td>
+                    {% if order.status == 'completed' %}
+                        <span style="color: green; font-weight: bold;">✅ Tamamlandı</span>
+                    {% elif order.status == 'pending' %}
+                        <span style="color: orange; font-weight: bold;">⏳ Bekliyor</span>
+                    {% else %}
+                        <span style="color: red; font-weight: bold;">❌ İptal</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card">
+        <p>Henüz hiç siparişiniz yok. Yukarıdaki kitaplardan sipariş verebilirsiniz!</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="background: #e8f5e8; margin-top: 30px;">
+    <h3>💡 Nasıl Sipariş Veririm?</h3>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        <li>Beğendiğiniz kitabı seçin</li>
+        <li>Adet miktarını belirleyin</li>
+        <li>"Sipariş Ver" butonuna tıklayın</li>
+        <li>Stok otomatik olarak güncellenecek ve trigger çalışacak!</li>
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!-- templates/login.html -->
+{% extends "base.html" %}
+{% block title %}Giriş - Kitap Mağazası{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 50px auto;">
+    <h2>Giriş Yap</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label>Şifre:</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn">Giriş Yap</button>
+    </form>
+    
+    <div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 4px;">
+        <h4>Test Kullanıcıları:</h4>
+        <p><strong>Admin:</strong> admin@bookstore.com / admin123</p>
+        <p><strong>Müşteri:</strong> ahmet@email.com / pass123</p>
+        <p><strong>Müşteri:</strong> ayse@email.com / pass123</p>
+        <p><strong>Müşteri:</strong> mehmet@email.com / pass123</p>
+    </div>
+</div>
+{% endblock %}

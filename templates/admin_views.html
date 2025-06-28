@@ -1,0 +1,230 @@
+<!-- templates/admin_views.html -->
+{% extends "base.html" %}
+{% block title %}Database Views{% endblock %}
+{% block content %}
+<h1>Database Views</h1>
+
+<div class="card" style="background: #e8f5e8; margin-bottom: 20px;">
+    <h3>👁️ 5 Farklı Database View</h3>
+    <p>Aşağıdaki tablar database'deki view'lardan gerçek zamanlı olarak gelmektedir. Her view farklı JOIN işlemleri ve filtreleme kriterleri içerir.</p>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('view1')">📚 Stokta Kitaplar</div>
+    <div class="tab" onclick="showTab('view2')">👥 Müşteri Özetleri</div>
+    <div class="tab" onclick="showTab('view3')">✍️ Yazar Kitapları</div>
+    <div class="tab" onclick="showTab('view4')">💰 Yüksek Değerli Siparişler</div>
+    <div class="tab" onclick="showTab('view5')">⚠️ Düşük Stok</div>
+</div>
+
+<div id="view1" class="tab-content active">
+    <h2>View 1: books_in_stock</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL:</strong> Stokta bulunan kitapları yazar bilgileriyle birlikte listeler (JOIN ile)</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Başlık</th>
+                <th>ISBN</th>
+                <th>Yazarlar</th>
+                <th>Kategori</th>
+                <th>Fiyat</th>
+                <th>Stok</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in views_data.books_in_stock %}
+            <tr>
+                <td>{{ book.book_id }}</td>
+                <td><strong>{{ book.title }}</strong></td>
+                <td>{{ book.isbn }}</td>
+                <td>{{ book.authors }}</td>
+                <td><span style="background: #e3f2fd; padding: 2px 6px; border-radius: 4px;">{{ book.category_name }}</span></td>
+                <td><strong>{{ book.price }} TL</strong></td>
+                <td>
+                    {% if book.stock_quantity > 10 %}
+                        <span style="color: green;">{{ book.stock_quantity }}</span>
+                    {% elif book.stock_quantity > 5 %}
+                        <span style="color: orange;">{{ book.stock_quantity }}</span>
+                    {% else %}
+                        <span style="color: red;">{{ book.stock_quantity }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="view2" class="tab-content">
+    <h2>View 2: customer_orders_summary</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL:</strong> Her müşterinin toplam sipariş sayısı ve harcama miktarını gösterir (GROUP BY ile)</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Müşteri ID</th>
+                <th>Müşteri Adı</th>
+                <th>Email</th>
+                <th>Toplam Sipariş</th>
+                <th>Toplam Harcama</th>
+                <th>Son Sipariş</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in views_data.customer_orders_summary %}
+            <tr>
+                <td>{{ customer.user_id }}</td>
+                <td><strong>{{ customer.customer_name }}</strong></td>
+                <td>{{ customer.email }}</td>
+                <td><span style="background: #fff3e0; padding: 2px 6px; border-radius: 4px;">{{ customer.total_orders }}</span></td>
+                <td><strong style="color: #4CAF50;">{{ customer.total_spent }} TL</strong></td>
+                <td>
+                    {% if customer.last_order_date %}
+                        {{ customer.last_order_date.strftime('%d.%m.%Y') }}
+                    {% else %}
+                        <span style="color: #999;">Sipariş yok</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="view3" class="tab-content">
+    <h2>View 3: author_books</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL:</strong> Yazarların kitaplarını kategorileriyle birlikte listeler (Çoklu JOIN)</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Yazar ID</th>
+                <th>Yazar Adı</th>
+                <th>Ülke</th>
+                <th>Kitap</th>
+                <th>Kategori</th>
+                <th>Yayın Yılı</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in views_data.author_books %}
+            <tr>
+                <td>{{ item.author_id }}</td>
+                <td><strong>{{ item.author_name }}</strong></td>
+                <td><span style="background: #e8f5e8; padding: 2px 6px; border-radius: 4px;">{{ item.nationality }}</span></td>
+                <td>{{ item.title }}</td>
+                <td>{{ item.category_name }}</td>
+                <td>{{ item.publication_year }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="view4" class="tab-content">
+    <h2>View 4: high_value_orders</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL:</strong> 50 TL'den fazla olan siparişleri müşteri bilgileriyle listeler (WHERE ve JOIN)</p>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sipariş No</th>
+                <th>Müşteri</th>
+                <th>Tarih</th>
+                <th>Tutar</th>
+                <th>Durum</th>
+                <th>Ürün Sayısı</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in views_data.high_value_orders %}
+            <tr>
+                <td><strong>#{{ order.order_id }}</strong></td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.order_date.strftime('%d.%m.%Y') }}</td>
+                <td><strong style="color: #4CAF50;">{{ order.total_amount }} TL</strong></td>
+                <td>
+                    {% if order.status == 'completed' %}
+                        <span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px;">✅ Tamamlandı</span>
+                    {% elif order.status == 'pending' %}
+                        <span style="background: #ff9800; color: white; padding: 2px 6px; border-radius: 4px;">⏳ Bekliyor</span>
+                    {% else %}
+                        <span style="background: #f44336; color: white; padding: 2px 6px; border-radius: 4px;">❌ İptal</span>
+                    {% endif %}
+                </td>
+                <td>{{ order.item_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="view5" class="tab-content">
+    <h2>View 5: low_stock_books</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>SQL:</strong> Stok miktarı 5'den az olan kitapları listeler (WHERE ile filtreleme)</p>
+    </div>
+    {% if views_data.low_stock_books %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Başlık</th>
+                <th>Yazarlar</th>
+                <th>Kategori</th>
+                <th>Stok</th>
+                <th>Fiyat</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in views_data.low_stock_books %}
+            <tr style="background: #ffebee;">
+                <td>{{ book.book_id }}</td>
+                <td><strong>{{ book.title }}</strong></td>
+                <td>{{ book.authors }}</td>
+                <td>{{ book.category_name }}</td>
+                <td><strong style="color: red; font-size: 18px;">⚠️ {{ book.stock_quantity }}</strong></td>
+                <td>{{ book.price }} TL</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card" style="background: #e8f5e8; text-align: center; padding: 50px;">
+        <h3>✅ Tüm kitaplar yeterli stokta!</h3>
+        <p>Şu anda stok miktarı 5'in altında olan kitap yok.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="background: #e3f2fd; margin-top: 30px;">
+    <h4>🔍 View'lar Hakkında Teknik Bilgi</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+        <div>
+            <h5>📊 Kullanılan SQL Özellikleri:</h5>
+            <ul style="padding-left: 20px;">
+                <li><strong>INNER JOIN:</strong> Kitap-kategori-yazar ilişkileri</li>
+                <li><strong>LEFT JOIN:</strong> Eksik ilişkileri de göstermek için</li>
+                <li><strong>GROUP BY:</strong> Müşteri özetleri için</li>
+                <li><strong>WHERE:</strong> Filtreleme koşulları</li>
+                <li><strong>GROUP_CONCAT:</strong> Birden fazla yazarı birleştirmek için</li>
+            </ul>
+        </div>
+        <div>
+            <h5>⚡ Gerçek Zamanlı Veri:</h5>
+            <ul style="padding-left: 20px;">
+                <li>Tüm view'lar database'den canlı çekilir</li>
+                <li>Stok değişiklikleri anında yansır</li>
+                <li>Yeni siparişler otomatik hesaplanır</li>
+                <li>Sayfayı yenileyerek güncel veriyi görebilirsiniz</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

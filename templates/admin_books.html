@@ -1,0 +1,154 @@
+<!-- templates/admin_books.html -->
+{% extends "base.html" %}
+{% block title %}Kitap Yönetimi{% endblock %}
+{% block content %}
+<h1>Kitap Yönetimi</h1>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('books-list')">📚 Kitap Listesi</div>
+    <div class="tab" onclick="showTab('add-book')">➕ Kitap Ekle</div>
+    <div class="tab" onclick="showTab('update-stock')">📊 Stok Güncelle</div>
+</div>
+
+<div id="books-list" class="tab-content active">
+    <h2>Mevcut Kitaplar</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Başlık</th>
+                <th>ISBN</th>
+                <th>Yazar</th>
+                <th>Kategori</th>
+                <th>Fiyat</th>
+                <th>Stok</th>
+                <th>Yıl</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{{ book.book_id }}</td>
+                <td><strong>{{ book.title }}</strong></td>
+                <td>{{ book.isbn }}</td>
+                <td>{{ book.authors or 'N/A' }}</td>
+                <td>{{ book.category_name }}</td>
+                <td>{{ book.price }} TL</td>
+                <td>
+                    {% if book.stock_quantity < 5 %}
+                        <span style="color: red; font-weight: bold;">{{ book.stock_quantity }}</span>
+                    {% elif book.stock_quantity < 10 %}
+                        <span style="color: orange; font-weight: bold;">{{ book.stock_quantity }}</span>
+                    {% else %}
+                        <span style="color: green;">{{ book.stock_quantity }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ book.publication_year }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="add-book" class="tab-content">
+    <h2>Yeni Kitap Ekle</h2>
+    <div class="card">
+        <form method="POST" action="{{ url_for('add_book') }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Başlık: *</label>
+                    <input type="text" name="title" required placeholder="Kitap başlığını girin">
+                </div>
+                <div class="form-group">
+                    <label>ISBN:</label>
+                    <input type="text" name="isbn" placeholder="9789750718XXX">
+                </div>
+                <div class="form-group">
+                    <label>Yayın Yılı:</label>
+                    <input type="number" name="publication_year" min="1800" max="2025" placeholder="2024">
+                </div>
+                <div class="form-group">
+                    <label>Fiyat: *</label>
+                    <input type="number" name="price" step="0.01" required placeholder="45.50">
+                </div>
+                <div class="form-group">
+                    <label>Stok Miktarı: *</label>
+                    <input type="number" name="stock_quantity" min="0" required placeholder="10">
+                </div>
+                <div class="form-group">
+                    <label>Kategori: *</label>
+                    <select name="category_id" required>
+                        <option value="">Kategori seçin</option>
+                        {% for category in categories %}
+                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Yazar: *</label>
+                <select name="author_id" required>
+                    <option value="">Yazar seçin</option>
+                    {% for author in authors %}
+                    <option value="{{ author.author_id }}">{{ author.first_name }} {{ author.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn">📚 Kitap Ekle (Trigger Çalışacak!)</button>
+        </form>
+    </div>
+    
+    <div class="card" style="background: #e3f2fd;">
+        <h4>💡 Kitap Ekleme Trigger'ı</h4>
+        <p>Yeni kitap eklediğinizde <strong>book_insert_log</strong> trigger'ı çalışacak ve işlem system_logs tablosuna kaydedilecek. Triggers sekmesinden bu kaydı görebilirsiniz.</p>
+    </div>
+</div>
+
+<div id="update-stock" class="tab-content">
+    <h2>Stok Güncelle</h2>
+    <div class="card">
+        <form method="POST" action="{{ url_for('update_stock') }}">
+            <div class="form-group">
+                <label>Kitap Seç: *</label>
+                <select name="book_id" required>
+                    <option value="">Güncellenecek kitabı seçin</option>
+                    {% for book in books %}
+                    <option value="{{ book.book_id }}">
+                        {{ book.title }} (Mevcut: {{ book.stock_quantity }} adet)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Yeni Stok Miktarı: *</label>
+                <input type="number" name="new_stock" min="0" required placeholder="Yeni stok miktarını girin">
+            </div>
+            <button type="submit" class="btn btn-warning">📊 Stok Güncelle (Trigger Çalışacak!)</button>
+        </form>
+    </div>
+    
+    <div class="card" style="background: #fff3e0;">
+        <h4>💡 Stok Güncelleme Trigger'ı</h4>
+        <p>Stok güncellendiğinde <strong>book_update_log</strong> trigger'ı çalışacak. Eski ve yeni stok değerleri system_logs tablosuna kaydedilecek. Triggers sekmesinden bu kaydı görebilirsiniz.</p>
+    </div>
+    
+    <div class="card" style="background: #ffebee;">
+        <h4>⚠️ Düşük Stoklu Kitaplar</h4>
+        <table class="table">
+            <thead>
+                <tr><th>Kitap</th><th>Mevcut Stok</th></tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                    {% if book.stock_quantity < 5 %}
+                    <tr>
+                        <td>{{ book.title }}</td>
+                        <td><strong style="color: red;">{{ book.stock_quantity }} adet</strong></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

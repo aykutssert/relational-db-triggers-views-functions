@@ -1,0 +1,254 @@
+<!-- templates/admin_triggers.html -->
+{% extends "base.html" %}
+{% block title %}Database Triggers{% endblock %}
+{% block content %}
+<h1>Database Triggers - System Logs</h1>
+
+<div class="card" style="background: #e8f5e8; margin-bottom: 20px;">
+    <h3>🔥 5 Farklı Database Trigger</h3>
+    <p>Trigger'lar otomatik olarak çalışır ve tüm işlemler system_logs tablosuna kaydedilir. Aşağıda trigger'ların çalışma kayıtlarını görebilirsiniz.</p>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('book-logs')">📚 Kitap Logları</div>
+    <div class="tab" onclick="showTab('user-logs')">👥 Kullanıcı Logları</div>
+    <div class="tab" onclick="showTab('stock-logs')">📦 Stok Logları</div>
+    <div class="tab" onclick="showTab('order-logs')">💰 Sipariş Logları</div>
+    <div class="tab" onclick="showTab('all-logs')">📄 Tüm Loglar</div>
+</div>
+
+<div id="book-logs" class="tab-content active">
+    <h2>Trigger 1 & 2: Kitap Ekleme/Güncelleme Logları</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>Trigger'lar:</strong> book_insert_log (AFTER INSERT) & book_update_log (AFTER UPDATE)</p>
+    </div>
+    
+    {% if triggers_data.book_logs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Log ID</th>
+                <th>İşlem</th>
+                <th>Kitap ID</th>
+                <th>Eski Değerler</th>
+                <th>Yeni Değerler</th>
+                <th>Zaman</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in triggers_data.book_logs %}
+            <tr>
+                <td><strong>{{ log.log_id }}</strong></td>
+                <td>
+                    {% if log.operation == 'INSERT' %}
+                        <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">➕ {{ log.operation }}</span>
+                    {% else %}
+                        <span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✏️ {{ log.operation }}</span>
+                    {% endif %}
+                </td>
+                <td><strong>{{ log.record_id }}</strong></td>
+                <td style="max-width: 200px; word-wrap: break-word;">{{ log.old_values or '-' }}</td>
+                <td style="max-width: 200px; word-wrap: break-word;">{{ log.new_values }}</td>
+                <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card" style="background: #e3f2fd; text-align: center; padding: 30px;">
+        <h4>📚 Henüz kitap işlem logu yok</h4>
+        <p>Kitap ekleyerek veya stok güncelleyerek trigger'ı test edebilirsiniz.</p>
+        <a href="{{ url_for('admin_books') }}" class="btn">Kitap Ekle/Güncelle</a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="user-logs" class="tab-content">
+    <h2>Trigger 5: Kullanıcı Ekleme Logları</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>Trigger:</strong> user_insert_log (AFTER INSERT ON users)</p>
+    </div>
+    
+    {% if triggers_data.user_logs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Log ID</th>
+                <th>İşlem</th>
+                <th>Kullanıcı ID</th>
+                <th>Kullanıcı Bilgileri</th>
+                <th>Zaman</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in triggers_data.user_logs %}
+            <tr>
+                <td><strong>{{ log.log_id }}</strong></td>
+                <td><span style="background: #2196F3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">👤 {{ log.operation }}</span></td>
+                <td><strong>{{ log.record_id }}</strong></td>
+                <td>{{ log.new_values }}</td>
+                <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card" style="background: #e3f2fd; text-align: center; padding: 30px;">
+        <h4>👥 Henüz kullanıcı ekleme logu yok</h4>
+        <p>Yeni kullanıcı ekleyerek trigger'ı test edebilirsiniz.</p>
+        <a href="{{ url_for('admin_users') }}" class="btn">Kullanıcı Ekle</a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="stock-logs" class="tab-content">
+    <h2>Trigger 3: Stok Güncelleme Logları</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>Trigger:</strong> order_stock_update (AFTER INSERT ON order_details)</p>
+    </div>
+    
+    {% if triggers_data.stock_logs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Log ID</th>
+                <th>İşlem</th>
+                <th>Kitap ID</th>
+                <th>Stok Düşürme Detayları</th>
+                <th>Zaman</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in triggers_data.stock_logs %}
+            <tr>
+                <td><strong>{{ log.log_id }}</strong></td>
+                <td><span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">📦 STOCK_UPDATE</span></td>
+                <td><strong>{{ log.record_id }}</strong></td>
+                <td>{{ log.new_values }}</td>
+                <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card" style="background: #e3f2fd; text-align: center; padding: 30px;">
+        <h4>📦 Henüz stok güncelleme logu yok</h4>
+        <p>Müşteri panelinden sipariş vererek trigger'ı test edebilirsiniz.</p>
+        <a href="{{ url_for('customer_dashboard') }}" class="btn">Sipariş Ver</a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="order-logs" class="tab-content">
+    <h2>Trigger 4: Sipariş Toplam Hesaplama Logları</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>Trigger:</strong> order_total_calculation (AFTER INSERT ON order_details)</p>
+    </div>
+    
+    {% if triggers_data.order_logs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Log ID</th>
+                <th>İşlem</th>
+                <th>Kayıt ID</th>
+                <th>İşlem Detayları</th>
+                <th>Zaman</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in triggers_data.order_logs %}
+            <tr>
+                <td><strong>{{ log.log_id }}</strong></td>
+                <td><span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">💰 {{ log.operation }}</span></td>
+                <td><strong>{{ log.record_id }}</strong></td>
+                <td>{{ log.new_values }}</td>
+                <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="card" style="background: #e3f2fd; text-align: center; padding: 30px;">
+        <h4>💰 Henüz sipariş işlem logu yok</h4>
+        <p>Sipariş vererek toplam hesaplama trigger'ını test edebilirsiniz.</p>
+        <a href="{{ url_for('customer_dashboard') }}" class="btn">Sipariş Ver</a>
+    </div>
+    {% endif %}
+</div>
+
+<div id="all-logs" class="tab-content">
+    <h2>Tüm System Logları (Son 50 Kayıt)</h2>
+    <div class="card" style="background: #f8f9fa; margin-bottom: 15px;">
+        <p><strong>Tüm Trigger İşlemleri:</strong> Kronolojik sırayla tüm trigger kayıtları</p>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Log ID</th>
+                <th>Tablo</th>
+                <th>İşlem</th>
+                <th>Kayıt ID</th>
+                <th>Detaylar</th>
+                <th>Zaman</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in triggers_data.book_logs + triggers_data.user_logs + triggers_data.stock_logs + triggers_data.order_logs %}
+            <tr>
+                <td><strong>{{ log.log_id }}</strong></td>
+                <td>
+                    {% if log.table_name == 'books' %}
+                        <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 4px;">📚 books</span>
+                    {% elif log.table_name == 'users' %}
+                        <span style="background: #fff3e0; padding: 2px 6px; border-radius: 4px;">👤 users</span>
+                    {% else %}
+                        <span style="background: #e8f5e8; padding: 2px 6px; border-radius: 4px;">📦 order_details</span>
+                    {% endif %}
+                </td>
+                <td>{{ log.operation }}</td>
+                <td><strong>{{ log.record_id }}</strong></td>
+                <td style="max-width: 300px; word-wrap: break-word;">{{ log.new_values }}</td>
+                <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="background: #fff3e0; margin-top: 30px;">
+    <h4>🎯 Trigger Test Rehberi</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+        <div>
+            <h5>✅ Trigger'ları Nasıl Test Ederim?</h5>
+            <ol style="padding-left: 20px;">
+                <li><strong>Kitap Trigger:</strong> Kitaplar sekmesinden yeni kitap ekleyin</li>
+                <li><strong>Stok Trigger:</strong> Kitap stokunu güncelleyin</li>
+                <li><strong>Kullanıcı Trigger:</strong> Kullanıcılar sekmesinden yeni kullanıcı ekleyin</li>
+                <li><strong>Sipariş Trigger:</strong> Müşteri panelinden sipariş verin</li>
+            </ol>
+        </div>
+        <div>
+            <h5>📊 Trigger Detayları:</h5>
+            <ul style="padding-left: 20px;">
+                <li><strong>AFTER INSERT/UPDATE:</strong> İşlem sonrası çalışır</li>
+                <li><strong>FOR EACH ROW:</strong> Her satır için ayrı çalışır</li>
+                <li><strong>OLD/NEW:</strong> Eski ve yeni değerleri tutar</li>
+                <li><strong>Otomatik Log:</strong> Tüm işlemler kaydedilir</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="background: #e8f5e8;">
+    <h4>💡 Canlı Test Önerisi</h4>
+    <p>Trigger'ların nasıl çalıştığını görmek için:</p>
+    <ol style="padding-left: 20px; margin: 10px 0;">
+        <li>Bu sayfayı açık tutun</li>
+        <li>Başka bir sekmede admin panelinden işlem yapın (kitap ekle, stok güncelle, kullanıcı ekle)</li>
+        <li>Bu sayfayı yenileyin (F5)</li>
+        <li>Yeni trigger kayıtlarını göreceksiniz!</li>
+    </ol>
+</div>
+{% endblock %}

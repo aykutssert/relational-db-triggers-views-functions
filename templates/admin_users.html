@@ -1,0 +1,111 @@
+<!-- templates/admin_users.html -->
+{% extends "base.html" %}
+{% block title %}Kullanıcı Yönetimi{% endblock %}
+{% block content %}
+<h1>Kullanıcı Yönetimi</h1>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('users-list')">👥 Kullanıcı Listesi</div>
+    <div class="tab" onclick="showTab('add-user')">➕ Kullanıcı Ekle</div>
+</div>
+
+<div id="users-list" class="tab-content active">
+    <h2>Kayıtlı Kullanıcılar</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Ad Soyad</th>
+                <th>Tip</th>
+                <th>Kayıt Tarihi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.user_id }}</td>
+                <td>{{ user.email }}</td>
+                <td><strong>{{ user.first_name }} {{ user.last_name }}</strong></td>
+                <td>
+                    {% if user.user_type == 'admin' %}
+                        <span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">🔑 ADMIN</span>
+                    {% else %}
+                        <span style="background: #2196F3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">👤 MÜŞTERİ</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="card" style="background: #e8f5e8;">
+        <h4>📊 Kullanıcı İstatistikleri</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 15px;">
+            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                <h3 style="color: #4CAF50;">{{ users|selectattr("user_type", "equalto", "customer")|list|length }}</h3>
+                <p>Toplam Müşteri</p>
+            </div>
+            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                <h3 style="color: #f44336;">{{ users|selectattr("user_type", "equalto", "admin")|list|length }}</h3>
+                <p>Toplam Admin</p>
+            </div>
+            <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                <h3 style="color: #2196F3;">{{ users|length }}</h3>
+                <p>Toplam Kullanıcı</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="add-user" class="tab-content">
+    <h2>Yeni Kullanıcı Ekle</h2>
+    <div class="card">
+        <form method="POST" action="{{ url_for('add_user') }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Email: *</label>
+                    <input type="email" name="email" required placeholder="kullanici@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Şifre: *</label>
+                    <input type="password" name="password" required placeholder="Güvenli şifre girin">
+                </div>
+                <div class="form-group">
+                    <label>Ad: *</label>
+                    <input type="text" name="first_name" required placeholder="Adı">
+                </div>
+                <div class="form-group">
+                    <label>Soyad: *</label>
+                    <input type="text" name="last_name" required placeholder="Soyadı">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Kullanıcı Tipi: *</label>
+                <select name="user_type" required>
+                    <option value="">Tip seçin</option>
+                    <option value="customer">👤 Müşteri</option>
+                    <option value="admin">🔑 Admin</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">👥 Kullanıcı Ekle (Trigger Çalışacak!)</button>
+        </form>
+    </div>
+    
+    <div class="card" style="background: #e3f2fd;">
+        <h4>💡 Kullanıcı Ekleme Trigger'ı</h4>
+        <p>Yeni kullanıcı eklediğinizde <strong>user_insert_log</strong> trigger'ı çalışacak ve işlem system_logs tablosuna kaydedilecek. Triggers sekmesinden bu kaydı görebilirsiniz.</p>
+    </div>
+    
+    <div class="card" style="background: #fff3e0;">
+        <h4>⚠️ Önemli Notlar</h4>
+        <ul style="padding-left: 20px; margin: 10px 0;">
+            <li>Email adresleri benzersiz olmalıdır</li>
+            <li>Admin kullanıcıları tüm panellere erişebilir</li>
+            <li>Müşteri kullanıcıları sadece kitap görüntüleme ve sipariş verme işlemlerini yapabilir</li>
+            <li>Sistem register sayfası olmadığı için yeni kullanıcılar sadece admin tarafından eklenebilir</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

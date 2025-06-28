@@ -1,0 +1,88 @@
+<!-- templates/admin_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+<h1>Admin Dashboard</h1>
+
+<div class="stats">
+    <div class="stat">
+        <h3>📚 {{ total_books }}</h3>
+        <p>Toplam Kitap</p>
+    </div>
+    <div class="stat">
+        <h3>👥 {{ total_customers }}</h3>
+        <p>Müşteri</p>
+    </div>
+    <div class="stat">
+        <h3>📦 {{ total_orders }}</h3>
+        <p>Sipariş</p>
+    </div>
+    <div class="stat">
+        <h3>💰 {{ "%.2f"|format(total_revenue) }} TL</h3>
+        <p>Toplam Gelir</p>
+    </div>
+</div>
+
+<div class="grid">
+    
+    <div class="card">
+        <h3>📖 Kitap Yönetimi</h3>
+        <p>Kitap ekleme, stok güncelleme ve kitap listesi görüntüleme işlemlerini yapabilirsiniz.</p>
+        <a href="{{ url_for('admin_books') }}" class="btn">Kitapları Yönet</a>
+    </div>
+
+    <div class="card">
+        <h3>👤 Kullanıcı Yönetimi</h3>
+        <p>Yeni kullanıcı ekleme ve mevcut kullanıcıları görüntüleme işlemlerini yapabilirsiniz.</p>
+        <a href="{{ url_for('admin_users') }}" class="btn">Kullanıcıları Yönet</a>
+    </div>
+
+    <div class="card">
+        <h3>📋 Sipariş Yönetimi</h3>
+        <p>Sipariş durumlarını güncelleme ve sipariş listesini görüntüleme işlemlerini yapabilirsiniz.</p>
+        <a href="{{ url_for('admin_orders') }}" class="btn">Siparişleri Yönet</a>
+    </div>
+
+    <div class="card">
+        <h3>👁️ Database Views</h3>
+        <p>5 farklı view'ın sonuçlarını görüntüleyebilirsiniz.</p>
+        <a href="{{ url_for('admin_views') }}" class="btn btn-info">Views'ları Gör</a>
+    </div>
+
+    <div class="card">
+        <h3>⚙️ Database Functions</h3>
+        <p>5 farklı function'ı test edebilir ve sonuçlarını görebilirsiniz.</p>
+        <a href="{{ url_for('admin_functions') }}" class="btn btn-info">Functions'ları Test Et</a>
+    </div>
+
+    <div class="card">
+        <h3>🔥 Database Triggers</h3>
+        <p>5 farklı trigger'ın loglarını ve çalışma kayıtlarını görebilirsiniz.</p>
+        <a href="{{ url_for('admin_triggers') }}" class="btn btn-warning">Trigger Loglarını Gör</a>
+    </div>
+</div>
+
+<div class="card" style="background: #fff3cd; border: 1px solid #ffeaa7; margin-top: 30px;">
+    <h3>🎯 Admin İşlemleri Rehberi</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+        <div>
+            <h4>Trigger'ları Test Etmek İçin:</h4>
+            <ul style="padding-left: 20px;">
+                <li>Yeni kitap ekleyin (kitap_insert_log trigger'ı)</li>
+                <li>Kitap stokunu güncelleyin (book_update_log trigger'ı)</li>
+                <li>Yeni kullanıcı ekleyin (user_insert_log trigger'ı)</li>
+                <li>Müşteri panelinden sipariş verin (stok trigger'ı)</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Function'ları Test Etmek İçin:</h4>
+            <ul style="padding-left: 20px;">
+                <li>Functions sekmesine gidin</li>
+                <li>Her function için test butonları var</li>
+                <li>Parametre girerek sonuçları görün</li>
+                <li>Gerçek zamanlı database sorguları</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

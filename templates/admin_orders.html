@@ -1,0 +1,111 @@
+<!-- templates/admin_orders.html -->
+{% extends "base.html" %}
+{% block title %}Sipariş Yönetimi{% endblock %}
+{% block content %}
+<h1>Sipariş Yönetimi</h1>
+
+<div class="card" style="background: #e8f5e8; margin-bottom: 20px;">
+    <h3>📊 Sipariş İstatistikleri</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+            <h3 style="color: #ff9800;">{{ orders|selectattr("status", "equalto", "pending")|list|length }}</h3>
+            <p>Bekleyen Siparişler</p>
+        </div>
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+            <h3 style="color: #4CAF50;">{{ orders|selectattr("status", "equalto", "completed")|list|length }}</h3>
+            <p>Tamamlanan Siparişler</p>
+        </div>
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+            <h3 style="color: #f44336;">{{ orders|selectattr("status", "equalto", "cancelled")|list|length }}</h3>
+            <p>İptal Edilen Siparişler</p>
+        </div>
+        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+            <h3 style="color: #2196F3;">{{ orders|length }}</h3>
+            <p>Toplam Sipariş</p>
+        </div>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Sipariş No</th>
+            <th>Müşteri</th>
+            <th>Tarih</th>
+            <th>Ürünler</th>
+            <th>Toplam</th>
+            <th>Durum</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td><strong>#{{ order.order_id }}</strong></td>
+            <td>{{ order.customer_name }}</td>
+            <td>{{ order.order_date.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td style="max-width: 200px;">{{ order.order_items }}</td>
+            <td><strong>{{ order.total_amount }} TL</strong></td>
+            <td>
+                {% if order.status == 'completed' %}
+                    <span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✅ Tamamlandı</span>
+                {% elif order.status == 'pending' %}
+                    <span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">⏳ Bekliyor</span>
+                {% else %}
+                    <span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">❌ İptal</span>
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('update_order_status') }}" style="display: inline;">
+                    <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                    <select name="new_status" onchange="this.form.submit()" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                        <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>⏳ Bekliyor</option>
+                        <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>✅ Tamamlandı</option>
+                        <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>❌ İptal</option>
+                    </select>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not orders %}
+<div class="card" style="text-align: center; padding: 50px;">
+    <h3>📦 Henüz sipariş yok</h3>
+    <p>Müşteriler sipariş vermeye başladığında burada görünecekler.</p>
+</div>
+{% endif %}
+
+<div class="card" style="background: #e3f2fd; margin-top: 30px;">
+    <h4>💡 Sipariş Yönetimi Bilgileri</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+        <div>
+            <h5>🔄 Durum Değişiklikleri:</h5>
+            <ul style="padding-left: 20px;">
+                <li><strong>Bekliyor:</strong> Yeni verilen siparişler</li>
+                <li><strong>Tamamlandı:</strong> Hazırlanıp gönderilen siparişler</li>
+                <li><strong>İptal:</strong> İptal edilen siparişler</li>
+            </ul>
+        </div>
+        <div>
+            <h5>⚡ Otomatik İşlemler:</h5>
+            <ul style="padding-left: 20px;">
+                <li>Sipariş verildiğinde stok otomatik düşer</li>
+                <li>Toplam tutar otomatik hesaplanır</li>
+                <li>Tüm işlemler trigger'larla loglanır</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="background: #fff3e0;">
+    <h4>🎯 Test İçin:</h4>
+    <p>Müşteri panelinden sipariş vererek trigger'ların nasıl çalıştığını test edebilirsiniz. Sipariş verildiğinde:</p>
+    <ul style="padding-left: 20px; margin: 10px 0;">
+        <li><strong>order_stock_update</strong> trigger'ı çalışır (stok düşer)</li>
+        <li><strong>order_total_calculation</strong> trigger'ı çalışır (toplam hesaplanır)</li>
+        <li>Triggers sekmesinden bu logları görebilirsiniz</li>
+    </ul>
+</div>
+{% endblock %}

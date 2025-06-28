@@ -1,0 +1,96 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kitap Mağazası{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; background: #f4f4f4; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: #333; color: white; padding: 1rem 0; margin-bottom: 20px; }
+        .nav { display: flex; justify-content: space-between; align-items: center; }
+        .nav h1 { color: #4CAF50; }
+        .nav a { color: white; text-decoration: none; margin: 0 10px; }
+        .nav a:hover { color: #4CAF50; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: 20px 0; padding: 20px; }
+        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin: 5px; }
+        .btn:hover { background: #45a049; }
+        .btn-danger { background: #f44336; }
+        .btn-warning { background: #ff9800; }
+        .btn-info { background: #2196F3; }
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f2f2f2; }
+        .table tr:hover { background: #f5f5f5; }
+        .alert { padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .alert-success { background: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; }
+        .alert-error { background: #f2dede; color: #a94442; border: 1px solid #ebccd1; }
+        .tabs { border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+        .tab { display: inline-block; padding: 10px 20px; background: #f9f9f9; border: 1px solid #ddd; border-bottom: none; cursor: pointer; }
+        .tab.active { background: white; border-bottom: 1px solid white; margin-bottom: -1px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat { text-align: center; padding: 20px; background: #4CAF50; color: white; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="nav">
+                <h1>📚 Kitap Mağazası</h1>
+                <div>
+                    {% if session.user_id %}
+                        <span>Hoş geldin, {{ session.user_name }}!</span>
+                        {% if session.user_type == 'admin' %}
+                            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                            <a href="{{ url_for('admin_books') }}">Kitaplar</a>
+                            <a href="{{ url_for('admin_users') }}">Kullanıcılar</a>
+                            <a href="{{ url_for('admin_orders') }}">Siparişler</a>
+                            <a href="{{ url_for('admin_views') }}">Views</a>
+                            <a href="{{ url_for('admin_functions') }}">Functions</a>
+                            <a href="{{ url_for('admin_queries') }}">Queries</a>
+                            <a href="{{ url_for('admin_transactions') }}">Transactions</a>
+                            <a href="{{ url_for('admin_triggers') }}">Triggers</a>
+                        {% else %}
+                            <a href="{{ url_for('customer_dashboard') }}">Ana Sayfa</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}">Çıkış</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

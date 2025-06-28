@@ -1,0 +1,218 @@
+<!-- templates/admin_transactions.html -->
+{% extends "base.html" %}
+{% block title %}Transaction Testing{% endblock %}
+{% block content %}
+<h1>Database Transaction Testing</h1>
+
+<div class="card" style="background: #e8f5e8; margin-bottom: 20px;">
+    <h3>⚡ Atomic Transaction Testing</h3>
+    <p>Test three different atomic transactions demonstrating ACID properties: Atomicity, Consistency, Isolation, and Durability.</p>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('transaction-tests')">🧪 Transaction Tests</div>
+    <div class="tab" onclick="showTab('transaction-history')">📋 Transaction History</div>
+    <div class="tab" onclick="showTab('acid-principles')">📚 ACID Principles</div>
+</div>
+
+<div id="transaction-tests" class="tab-content active">
+    <h2>Atomic Transaction Tests</h2>
+    
+    <div class="grid">
+        <div class="card">
+            <h4>🛒 Transaction 1: Complete Order Processing</h4>
+            <p><strong>Purpose:</strong> Atomic order creation with stock validation and updates</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Stock availability check (with FOR UPDATE lock)</li>
+                <li>Order creation</li>
+                <li>Order details insertion</li>
+                <li>Automatic stock deduction (via triggers)</li>
+                <li>Order total calculation (via triggers)</li>
+            </ul>
+            
+            <form method="POST" action="{{ url_for('test_transaction1') }}">
+                <div class="form-group">
+                    <label>Customer ID:</label>
+                    <select name="customer_id">
+                        <option value="2">Ahmet Yılmaz (ID: 2)</option>
+                        <option value="3">Ayşe Demir (ID: 3)</option>
+                        <option value="4">Mehmet Kaya (ID: 4)</option>
+                        <option value="5">Fatma Çelik (ID: 5)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Book ID:</label>
+                    <select name="book_id">
+                        <option value="1">Kar (ID: 1)</option>
+                        <option value="2">Benim Adım Kırmızı (ID: 2)</option>
+                        <option value="3">Kürk Mantolu Madonna (ID: 3)</option>
+                        <option value="4">Şu Çılgın Türkler (ID: 4)</option>
+                        <option value="5">İnce Memed (ID: 5)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantity:</label>
+                    <input type="number" name="quantity" value="1" min="1">
+                    <small style="color: #666;">Enter more than available stock to test rollback</small>
+                </div>
+                <button type="submit" class="btn">🧪 Test Transaction 1</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h4>📦 Transaction 2: Bulk Stock Update</h4>
+            <p><strong>Purpose:</strong> Atomic bulk update of low-stock books</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Find books with stock < 10</li>
+                <li>Lock all selected books (FOR UPDATE)</li>
+                <li>Update stock quantities atomically</li>
+                <li>Log bulk operation</li>
+                <li>Rollback if any update fails</li>
+            </ul>
+            
+            <form method="POST" action="{{ url_for('test_transaction2') }}">
+                <div class="form-group">
+                    <label>Stock Increase Amount:</label>
+                    <input type="number" name="stock_adjustment" value="5" min="1" max="50">
+                </div>
+                <button type="submit" class="btn btn-warning">🧪 Test Transaction 2</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h4>🔄 Transaction 3: Order Transfer Simulation</h4>
+            <p><strong>Purpose:</strong> Atomic transfer of orders between users</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Validate both users exist</li>
+                <li>Find pending orders from source user</li>
+                <li>Transfer orders atomically</li>
+                <li>Log transfer operation</li>
+                <li>Ensure referential integrity</li>
+            </ul>
+            
+            <form method="POST" action="{{ url_for('test_transaction3') }}">
+                <div class="form-group">
+                    <label>From User:</label>
+                    <select name="from_user">
+                        <option value="2">Ahmet Yılmaz (ID: 2)</option>
+                        <option value="3">Ayşe Demir (ID: 3)</option>
+                        <option value="4">Mehmet Kaya (ID: 4)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>To User:</label>
+                    <select name="to_user">
+                        <option value="3">Ayşe Demir (ID: 3)</option>
+                        <option value="4">Mehmet Kaya (ID: 4)</option>
+                        <option value="5">Fatma Çelik (ID: 5)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-info">🧪 Test Transaction 3</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="transaction-history" class="tab-content">
+    <h2>Transaction Execution History</h2>
+    
+    {% if transaction_history %}
+        {% for transaction in transaction_history %}
+        <div class="card" style="margin-bottom: 20px; border-left: 5px solid {{ '#4CAF50' if transaction.status == 'SUCCESS' else '#f44336' if transaction.status == 'ROLLBACK' else '#ff9800' }};">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4>{{ transaction.type }}</h4>
+                <div>
+                    <span style="background: {{ '#4CAF50' if transaction.status == 'SUCCESS' else '#f44336' if transaction.status == 'ROLLBACK' else '#ff9800' }}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                        {% if transaction.status == 'SUCCESS' %}✅ SUCCESS{% elif transaction.status == 'ROLLBACK' %}🔄 ROLLBACK{% else %}⏳ PENDING{% endif %}
+                    </span>
+                    <span style="color: #666; margin-left: 10px;">{{ transaction.timestamp }}</span>
+                </div>
+            </div>
+            
+            {% if transaction.error %}
+            <div style="background: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                <strong style="color: #d32f2f;">Error:</strong> {{ transaction.error }}
+            </div>
+            {% endif %}
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 4px;">
+                <h5>Transaction Steps:</h5>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    {% for detail in transaction.details %}
+                    <li style="margin: 5px 0; color: {{ '#d32f2f' if detail.startswith('❌') else '#388e3c' if detail.startswith('✅') else '#f57c00' if detail.startswith('🔄') else 'inherit' }};">
+                        {{ detail }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="card" style="text-align: center; padding: 50px;">
+        <h3>📝 No transaction history yet</h3>
+        <p>Execute some transactions from the "Transaction Tests" tab to see their execution logs here.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="acid-principles" class="tab-content">
+    <h2>ACID Principles Demonstration</h2>
+    
+    <div class="grid">
+        <div class="card">
+            <h4>⚛️ Atomicity</h4>
+            <p><strong>All or Nothing:</strong> Either all operations in a transaction succeed, or none do.</p>
+            <ul style="padding-left: 20px;">
+                <li>If stock check fails → entire order creation rolls back</li>
+                <li>If any bulk update fails → all stock updates are undone</li>
+                <li>If user validation fails → no orders are transferred</li>
+            </ul>
+            <p><strong>Demo:</strong> Try ordering more books than available stock to see rollback.</p>
+        </div>
+        
+        <div class="card">
+            <h4>🔒 Consistency</h4>
+            <p><strong>Valid State:</strong> Database moves from one valid state to another.</p>
+            <ul style="padding-left: 20px;">
+                <li>Stock quantities never go negative</li>
+                <li>Order totals always match detail subtotals</li>
+                <li>Foreign key relationships are maintained</li>
+            </ul>
+            <p><strong>Demo:</strong> Constraints prevent invalid data states during transactions.</p>
+        </div>
+        
+        <div class="card">
+            <h4>🚧 Isolation</h4>
+            <p><strong>Concurrent Safety:</strong> Transactions don't interfere with each other.</p>
+            <ul style="padding-left: 20px;">
+                <li>FOR UPDATE locks prevent concurrent stock modifications</li>
+                <li>Row-level locking during updates</li>
+                <li>Consistent reads during transaction execution</li>
+            </ul>
+            <p><strong>Demo:</strong> Multiple users can't order the same last item simultaneously.</p>
+        </div>
+        
+        <div class="card">
+            <h4>💾 Durability</h4>
+            <p><strong>Permanent Changes:</strong> Committed transactions survive system failures.</p>
+            <ul style="padding-left: 20px;">
+                <li>COMMIT ensures changes are permanently stored</li>
+                <li>Transaction logs protect against failures</li>
+                <li>Database recovery mechanisms</li>
+            </ul>
+            <p><strong>Demo:</strong> Successful transactions remain after application restart.</p>
+        </div>
+    </div>
+    
+    <div class="card" style="background: #e3f2fd; margin-top: 20px;">
+        <h4>🔬 How to Test Transactions</h4>
+        <ol style="padding-left: 20px; margin: 10px 0;">
+            <li><strong>Success Case:</strong> Use normal parameters → See successful commit</li>
+            <li><strong>Failure Case:</strong> Try ordering 100 books (insufficient stock) → See rollback</li>
+            <li><strong>Bulk Update:</strong> Run when some books have low stock → See atomic updates</li>
+            <li><strong>Transfer Test:</strong> Transfer orders between users → See referential integrity</li>
+            <li><strong>Check History:</strong> View detailed step-by-step execution logs</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
